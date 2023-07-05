@@ -1,60 +1,54 @@
 # Imports
-import torch
-from .vanilla_mcts.board import Board
 from .minimax.tboard import TBoard
 from .minimax import player
-from .vanilla_mcts.mcts import MCTS
-from .alphazero.mcts0 import MCTS0
-from .alphazero.model import NeuralNetwork
-from .alphazero.helper import get_device
+from .vanilla_mcts.board import Board
+from .vanilla_mcts.mcts import Old_MCTS
+from .mcts.mcts import MCTS
 
 def main():
-    board = TBoard(10, 10, 5)
+	board = TBoard(Board.max_row, Board.max_col, 5)
+	last_move = None
+	# playerO = player.BotPlayer('O', 2)
+	while not board.gameover():
+		bboard = board.convert_to_binh_board()
+		bboard = Board(bboard)
+		old_mcts = Old_MCTS(bboard, last_move, 20, 2000)
+		old_mcts.search()
+		
+		r, c = old_mcts.advise().move
 
-    playerX = player.HumanPlayer()
-    playerO = player.BotPlayer('O', 2)
-    last_move = None
-    # device = get_device()
-    # nn_args = {
-    #     'num_filter': 32,
-    #     'filter_size': 3,
-    #     'hidden_size': 128, # for policy head
-    #     'num_block': 9 # for resnet (should be 19 or 39)
-    # }
-    # nn = NeuralNetwork(nn_args, device)
-    # path = './runs/iteration_7.pt'
-    # nn.load_state_dict(torch.load(path))
-    
-    while not board.gameover():
-        board.render()
-        
-        bboard = board.convert_to_binh_board()
-        bboard = Board(bboard)
-        mcts = MCTS(bboard, last_move, 20, 200)
-        # mcts = MCTS0(bboard, last_move, nn, 100, 1000)
-        mcts.search()
+		last_move = r, c
+		moveX = c+1, r+1
+		board.set_move(moveX, 'X')
+		print(f"Old_MCTS move: {moveX}")
+		board.render()
 
-        r, c = mcts.advise().move
-        moveX = c+1, r+1
-        board.set_move(moveX, 'X')
-        board.render()
-        # exit(0)
-        if board.gameover(): break
+		if board.gameover(): break
 
-        moveO = playerO.get_move(board)
-        board.set_move(moveO, 'O')
-        print(f"Computer Move: {moveO}")
-        board.render()
-        tc, tr = moveO
-        last_move = tr-1, tc-1
+		bboard = board.convert_to_binh_board()
+		bboard = Board(bboard)
+		mcts = MCTS(bboard, last_move, depth=6, max_sims=2000)
+		mcts.think()
 
-    
-    board.render()
-    if board.iswin('X'):
-        print('Player X has won!')
-    elif board.iswin('O'):
-        print('Player O has won!')
-    elif len(board.possible_moves()) == 0:
-        print('Draw!')
+		r, c = mcts.advise().last_move
+
+		last_move = r, c
+		moveO = c+1, r+1
+		board.set_move(moveO, 'O')
+		print(f"MCTS move: {moveO}")
+		board.render()
+
+		if board.gameover(): break
+
+		# moveO = playerO.get_move(board)
+		# board.set_move(moveO, 'O')
+		# print(f"MinMax move: {moveO}")
+
+	if board.iswin('X'):
+		print('Player X has won!')
+	elif board.iswin('O'):
+		print('Player O has won!')
+	elif len(board.possible_moves()) == 0:
+		print('Draw!')
 
 main()

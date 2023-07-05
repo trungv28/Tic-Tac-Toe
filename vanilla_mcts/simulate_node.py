@@ -13,7 +13,7 @@ class SimulateNode(Node):
 	def simulate(self):
 		original_player = self.player
 		while True:
-			moves = self.get_random_moves()
+			moves = self.get_moves()
 			if not moves: return 0.5 # no more moves mean draw
 			move = random.choice(moves)
 

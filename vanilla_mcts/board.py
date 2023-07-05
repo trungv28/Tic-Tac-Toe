@@ -1,6 +1,6 @@
 from copy import deepcopy
-MAX_ROW = 10
-MAX_COL = 10
+MAX_ROW = 20
+MAX_COL = 20
 
 class Board:
 	max_row, max_col = MAX_ROW, MAX_COL

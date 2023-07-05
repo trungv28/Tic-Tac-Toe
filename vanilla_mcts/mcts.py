@@ -4,7 +4,7 @@ from .simulate_node import SimulateNode
 
 # TODO: Add bound to reduce width of tree
 
-class MCTS:
+class Old_MCTS:
 	def __init__(self, board:Board, last_move:tuple[int, int], sims_per:int=1, max_sims=1) -> None:
 		self.root = ThinkNode(board, last_move)
 		self.sims_per = sims_per
@@ -23,7 +23,7 @@ class MCTS:
 
 		sims = min(self.sims_per * len(self.root.edges), self.max_sims)
 		for i in range(sims):
-			print(f'sims no.{i+1}:')
+			# if i%100 == 99: print(f'sims no.{i+1}:')
 			self.__iter_search()
 
 	def __iter_search(self):

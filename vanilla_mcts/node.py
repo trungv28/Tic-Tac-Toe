@@ -47,41 +47,6 @@ class Node:
 			result, _ = self.__check_win_next(move, self.player)
 			if result: return [move]
 
-		good_options = set()
-		for move in moves:
-			# defend 2 ways 4
-			result, pos = self.__check_win_next(move, -self.player)
-			if result: # if opponent can play 2 ways 4
-				good_options.add(move)
-
-				pos1, pos2 = pos
-				# special case in the middle 
-				if self.state[pos1] == -self.player and \
-					self.state[pos2] == -self.player:
-
-					r1, c1 = pos1
-					r2, c2 = pos2
-
-					dr, dc = (r2-r1)//3, (c2-c1)//3
-					move1 = r1-dr, c1-dc
-					move2 = r2+dr, c2+dc
-
-					good_options |= {move1, move2}
-
-			# half wins
-			original_board = deepcopy(self.state)
-
-			self.state[move] = self.player
-			for m in moves:
-				if m == move: continue
-				if self.__check_win_now(m, self.player):
-					good_options.add(move)
-					break
-
-			self.state = original_board
-
-		if good_options: return list(good_options)	
-
 		# no special cases
 		return moves
 

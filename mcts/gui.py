@@ -1,11 +1,11 @@
-from .vanilla_mcts.board import Board, MAX_ROW, MAX_COL
-from .vanilla_mcts.mcts import MCTS
-from .vanilla_mcts.node import Node
+from .board import Board
+from .mcts import MCTS
+from .node import Node
+from .help_node import HelpNode
 
 import tkinter as tk
 import tkinter.font as font
 from tkinter import messagebox
-import numpy as np
 
 class TicTacToe:
 	def __init__(self, root:tk.Tk) -> None:
@@ -18,10 +18,10 @@ class TicTacToe:
 		self.game_frame = tk.Frame(root)
 
 		self.buttons:list[list[tk.Button]] = [
-			[None for _ in range(MAX_COL)] for _ in range(MAX_ROW)
+			[None for _ in range(Board.max_col)] for _ in range(Board.max_row)
 		]
-		for i in range(MAX_ROW):
-			for j in range(MAX_COL):
+		for i in range(Board.max_row):
+			for j in range(Board.max_col):
 				button = tk.Button(
 					self.game_frame,
 					width=2, height=1,
@@ -32,21 +32,12 @@ class TicTacToe:
 
 
 		self.vmap = {1:'X', -1:'O'}
-		self.board = Board(np.zeros((MAX_ROW, MAX_COL)))
+		self.board = Board()
+		self.free_space = Board.max_row*Board.max_col
 		self.select_move = None
 
-		# nn_args = {
-		# 	'num_filter': 32,
-		# 	'filter_size': 3,
-		# 	'hidden_size': 128, # for policy head
-		# 	'num_block': 9 # for resnet (should be 19 or 39)
-		# }
-		# self.model = NeuralNetwork(nn_args, get_device())
-		# path = './runs/iteration_7.pt'
-		# self.model.load_state_dict(torch.load(path))
-
 	def __init__choose_frame(self):
-		myfont = font.Font(size=15)
+		myfont = font.Font(size=12)
 		tk.Button(
 			self.choose_frame,
 			text='X', font=myfont,
@@ -92,6 +83,7 @@ class TicTacToe:
 
 	def process(self, _):
 		'''Internal process after user press Enter'''
+		self.free_space -= 1
 		if not self.select_move:
 			return messagebox.showerror('Error', 'Please choose your move!')
 
@@ -127,8 +119,9 @@ class TicTacToe:
 		self.__enable_buttons()
 
 	def reset(self):
-		self.board = Board(np.zeros((MAX_ROW, MAX_COL)))
+		self.board = Board()
 		self.select_move = None
+		self.free_space = Board.max_row*Board.max_col
 
 		for row in self.buttons:
 			for button in row:
@@ -140,22 +133,19 @@ class TicTacToe:
 		self.choose_frame.pack(fill=tk.BOTH)
 
 	def bot_play(self):
-		sims_per, max_sims = 100, 1000
-		mcts = MCTS(self.board, self.select_move, sims_per, max_sims)
-		mcts.search()
-		self.bot_move = mcts.advise().move
+		mcts = MCTS(self.board, self.select_move, depth=6, max_sims=2000)
+		mcts.think()
+		self.bot_move = mcts.advise().last_move
 
-		# mcts = MCTS0(self.board, self.select_move, self.model, sims_per, max_sims)
-		# mcts.search()
-		# self.bot_move = mcts.advise().move
+		self.free_space -= 1
 
 	def __check_win(self, move:tuple[int, int]):
-		node = Node(self.board, move)
-		if node.check_lose():
+		player = -self.board[move]
+		if HelpNode.check_lose(self.board, move, player):
 			return 1
 
-		if not node.get_moves():
-			return 0
+		print(self.free_space)
+		if self.free_space == 0: return 0
 
 	def __disable_buttons(self):
 		for row in self.buttons:
